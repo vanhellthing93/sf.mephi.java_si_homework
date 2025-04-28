@@ -40,3 +40,4 @@ build/
 /structure.md
 /Напоминания.md
 /src/main/resources/database.properties
+/src/main/resources/application.properties

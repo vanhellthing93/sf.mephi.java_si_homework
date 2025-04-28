@@ -4,11 +4,13 @@ public class User {
 
     private String login;
     private String encryptedPassword;
+    private String salt;
     private Role role;
 
-    public User(String login, String encryptedPassword, Role role) {
+    public User(String login, String encryptedPassword, String salt, Role role) {
         this.login = login;
         this.encryptedPassword = encryptedPassword;
+        this.salt = salt;
         this.role = role;
     }
 
@@ -28,6 +30,14 @@ public class User {
         this.encryptedPassword = encryptedPassword;
     }
 
+    public String getSalt() {
+        return salt;
+    }
+
+    public void setSalt(String salt) {
+        this.salt = salt;
+    }
+
     public Role getRole() {
         return role;
     }
@@ -36,28 +46,6 @@ public class User {
         this.role = role;
     }
 
-    // Переопределение методов equals и hashCode для корректного сравнения объектов
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        User user = (User) o;
-
-        if (!login.equals(user.login)) return false;
-        if (!encryptedPassword.equals(user.encryptedPassword)) return false;
-        return role == user.role;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = login.hashCode();
-        result = 31 * result + encryptedPassword.hashCode();
-        result = 31 * result + role.hashCode();
-        return result;
-    }
-
-    // Переопределение метода toString для удобного вывода информации о пользователе
     @Override
     public String toString() {
         return "User{" +
@@ -66,7 +54,6 @@ public class User {
                 '}';
     }
 
-    // Вложенный enum для ролей пользователя
     public enum Role {
         ADMIN,
         USER

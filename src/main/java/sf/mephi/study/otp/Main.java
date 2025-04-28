@@ -3,6 +3,7 @@ package sf.mephi.study.otp;
 import sf.mephi.study.otp.dao.UserDAO;
 import sf.mephi.study.otp.model.User;
 import sf.mephi.study.otp.util.DatabaseUtil;
+import sf.mephi.study.otp.util.EncryptionUtil;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -17,7 +18,9 @@ public class Main {
         UserDAO userDAO = new UserDAO();
 
         // Создаем нового пользователя
-        User newUser = new User("test", "test", User.Role.USER);
+        String salt = EncryptionUtil.generateSalt();
+        String encryptedPassword = EncryptionUtil.hashPassword("test", salt);
+        User newUser = new User("test", encryptedPassword, salt, User.Role.USER);
 
         // Сохраняем пользователя в базу данных
         saveUser(newUser, userDAO);

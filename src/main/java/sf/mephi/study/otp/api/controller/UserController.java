@@ -4,6 +4,9 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import sf.mephi.study.otp.model.User;
 import sf.mephi.study.otp.service.UserService;
+import sf.mephi.study.otp.util.EncryptionUtil;
+import sf.mephi.study.otp.util.JwtUtil;
+
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -13,9 +16,11 @@ import java.util.Optional;
 public class UserController {
 
     private final UserService userService;
+    private final JwtUtil jwtUtil;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, JwtUtil jwtUtil) {
         this.userService = userService;
+        this.jwtUtil = jwtUtil;
     }
 
     public HttpHandler registerUserHandler() {
@@ -39,16 +44,25 @@ public class UserController {
         };
     }
 
-    public HttpHandler getUserHandler() {
+    public HttpHandler loginHandler() {
         return exchange -> {
-            if ("GET".equals(exchange.getRequestMethod())) {
+            if ("POST".equals(exchange.getRequestMethod())) {
                 String login = getQueryParam(exchange, "login");
-                if (login != null) {
-                    Optional<User> user = userService.getUserByLogin(login);
-                    if (user.isPresent()) {
-                        sendResponse(exchange, 200, user.get().toString());
+                String password = getQueryParam(exchange, "password");
+
+                if (login != null && password != null) {
+                    Optional<User> userOptional = userService.getUserByLogin(login);
+                    if (userOptional.isPresent()) {
+                        User user = userOptional.get();
+                        String hashedPassword = EncryptionUtil.hashPassword(password, user.getSalt());
+                        if (user.getEncryptedPassword().equals(hashedPassword)) {
+                            String token = jwtUtil.generateToken(login);
+                            sendResponse(exchange, 200, "{\"token\":\"" + token + "\"}");
+                        } else {
+                            sendResponse(exchange, 401, "Invalid login or password");
+                        }
                     } else {
-                        sendResponse(exchange, 404, "User not found");
+                        sendResponse(exchange, 401, "Invalid login or password");
                     }
                 } else {
                     sendResponse(exchange, 400, "Invalid request parameters");
