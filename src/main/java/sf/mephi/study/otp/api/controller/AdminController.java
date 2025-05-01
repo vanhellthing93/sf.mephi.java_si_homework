@@ -23,43 +23,6 @@ public class AdminController {
         this.jwtUtil = jwtUtil;
     }
 
-
-    public HttpHandler getUserHandler() {
-        return exchange -> {
-            if ("GET".equals(exchange.getRequestMethod())) {
-                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
-                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                    String token = authHeader.substring(7);
-                    String username = jwtUtil.extractUsername(token);
-                    if (jwtUtil.validateToken(token, username)) {
-                        Optional<User> adminUser = adminService.getUserByLogin(username);
-                        if (adminUser.isPresent() && adminUser.get().getRole() == User.Role.ADMIN) {
-                            String login = getQueryParam(exchange, "login");
-                            if (login != null) {
-                                Optional<User> user = adminService.getUserByLogin(login);
-                                if (user.isPresent()) {
-                                    sendResponse(exchange, 200, user.get().toString());
-                                } else {
-                                    sendResponse(exchange, 404, "User not found");
-                                }
-                            } else {
-                                sendResponse(exchange, 400, "Invalid request parameters");
-                            }
-                        } else {
-                            sendResponse(exchange, 403, "Forbidden: Admin role required");
-                        }
-                    } else {
-                        sendResponse(exchange, 403, "Forbidden");
-                    }
-                } else {
-                    sendResponse(exchange, 401, "Unauthorized");
-                }
-            } else {
-                sendResponse(exchange, 405, "Method Not Allowed");
-            }
-        };
-    }
-
     public HttpHandler deleteUserHandler() {
         return exchange -> {
             if ("DELETE".equals(exchange.getRequestMethod())) {
@@ -82,10 +45,10 @@ public class AdminController {
                             sendResponse(exchange, 403, "Forbidden: Admin role required");
                         }
                     } else {
-                        sendResponse(exchange, 403, "Forbidden");
+                        sendResponse(exchange, 403, "Forbidden: Invalid token");
                     }
                 } else {
-                    sendResponse(exchange, 401, "Unauthorized");
+                    sendResponse(exchange, 401, "Unauthorized: Missing or invalid token");
                 }
             } else {
                 sendResponse(exchange, 405, "Method Not Allowed");
@@ -109,10 +72,10 @@ public class AdminController {
                             sendResponse(exchange, 403, "Forbidden: Admin role required");
                         }
                     } else {
-                        sendResponse(exchange, 403, "Forbidden");
+                        sendResponse(exchange, 403, "Forbidden: Invalid token");
                     }
                 } else {
-                    sendResponse(exchange, 401, "Unauthorized");
+                    sendResponse(exchange, 401, "Unauthorized: Missing or invalid token");
                 }
             } else {
                 sendResponse(exchange, 405, "Method Not Allowed");
@@ -145,10 +108,10 @@ public class AdminController {
                             sendResponse(exchange, 403, "Forbidden: Admin role required");
                         }
                     } else {
-                        sendResponse(exchange, 403, "Forbidden");
+                        sendResponse(exchange, 403, "Forbidden: Invalid token");
                     }
                 } else {
-                    sendResponse(exchange, 401, "Unauthorized");
+                    sendResponse(exchange, 401, "Unauthorized: Missing or invalid token");
                 }
             } else {
                 sendResponse(exchange, 405, "Method Not Allowed");
@@ -176,10 +139,46 @@ public class AdminController {
                             sendResponse(exchange, 403, "Forbidden: Admin role required");
                         }
                     } else {
-                        sendResponse(exchange, 403, "Forbidden");
+                        sendResponse(exchange, 403, "Forbidden: Invalid token");
                     }
                 } else {
-                    sendResponse(exchange, 401, "Unauthorized");
+                    sendResponse(exchange, 401, "Unauthorized: Missing or invalid token");
+                }
+            } else {
+                sendResponse(exchange, 405, "Method Not Allowed");
+            }
+        };
+    }
+
+    public HttpHandler getUserHandler() {
+        return exchange -> {
+            if ("GET".equals(exchange.getRequestMethod())) {
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                    String token = authHeader.substring(7);
+                    String username = jwtUtil.extractUsername(token);
+                    if (jwtUtil.validateToken(token, username)) {
+                        Optional<User> adminUser = adminService.getUserByLogin(username);
+                        if (adminUser.isPresent() && adminUser.get().getRole() == User.Role.ADMIN) {
+                            String login = getQueryParam(exchange, "login");
+                            if (login != null) {
+                                Optional<User> user = adminService.getUserByLogin(login);
+                                if (user.isPresent()) {
+                                    sendResponse(exchange, 200, user.get().toString());
+                                } else {
+                                    sendResponse(exchange, 404, "User not found");
+                                }
+                            } else {
+                                sendResponse(exchange, 400, "Invalid request parameters");
+                            }
+                        } else {
+                            sendResponse(exchange, 403, "Forbidden: Admin role required");
+                        }
+                    } else {
+                        sendResponse(exchange, 403, "Forbidden: Invalid token");
+                    }
+                } else {
+                    sendResponse(exchange, 401, "Unauthorized: Missing or invalid token");
                 }
             } else {
                 sendResponse(exchange, 405, "Method Not Allowed");

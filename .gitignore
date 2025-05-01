@@ -41,3 +41,6 @@ build/
 /Напоминания.md
 /src/main/resources/database.properties
 /src/main/resources/application.properties
+/src/main/resources/email.properties
+/src/main/resources/sms.properties
+/src/main/resources/telegram.properties

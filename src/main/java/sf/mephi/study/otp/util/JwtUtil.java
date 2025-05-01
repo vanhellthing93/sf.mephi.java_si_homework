@@ -14,12 +14,16 @@ import java.util.function.Function;
 
 public class JwtUtil {
 
-    private static final String SECRET_KEY = AppConfig.getProperty("jwt.secret");
+    private static final String SECRET_KEY = AppConfig.getJwtSecret();
     private static final Key SIGNING_KEY = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     private static final long EXPIRATION_TIME = AppConfig.getExpirationTime();
 
     public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+        try {
+            return extractClaim(token, Claims::getSubject);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public Date extractExpiration(String token) {

@@ -32,8 +32,8 @@ public class OTPCodesDAO {
         }
     }
 
-    public Optional<OTPCode> findByOperationId(String operationId) {
-        String sql = "SELECT id, operation_id, code, status, created_at FROM otp_codes WHERE operation_id = ?";
+    public Optional<OTPCode> findActiveByOperationId(String operationId) {
+        String sql = "SELECT id, operation_id, code, status, created_at FROM otp_codes WHERE operation_id = ? AND status = 'ACTIVE'";
         try (Connection connection = DatabaseUtil.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
@@ -51,6 +51,28 @@ public class OTPCodesDAO {
             e.printStackTrace();
         }
         return Optional.empty();
+    }
+
+    public List<OTPCode> findAllByOperationId(String operationId) {
+        String sql = "SELECT id, operation_id, code, status, created_at FROM otp_codes WHERE operation_id = ?";
+        List<OTPCode> otpCodes = new ArrayList<>();
+        try (Connection connection = DatabaseUtil.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, operationId);
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                String code = resultSet.getString("code");
+                OTPCode.Status status = OTPCode.Status.valueOf(resultSet.getString("status"));
+                LocalDateTime createdAt = resultSet.getTimestamp("created_at").toLocalDateTime();
+                otpCodes.add(new OTPCode(id, operationId, code, status, createdAt));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return otpCodes;
     }
 
     public List<OTPCode> findAll() {

@@ -9,7 +9,6 @@ import sf.mephi.study.otp.util.OTPGenerator;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 
 public class OTPService {
 
@@ -27,6 +26,12 @@ public class OTPService {
             OTPConfig config = configOptional.get();
             String code = OTPGenerator.generateOTP(config.getCodeLength());
             OTPCode otpCode = new OTPCode(0, operationId, code, OTPCode.Status.ACTIVE, LocalDateTime.now());
+            // проверяем есть ли в бд коды с такой же operation id и помечаем их expired
+            Optional<OTPCode> otpCodeOptional = otpCodesDAO.findActiveByOperationId(operationId);
+            if (otpCodeOptional.isPresent()) {
+                OTPCode oldOtpCode = otpCodeOptional.get();
+                expireOTPById(oldOtpCode.getId());
+            }
             otpCodesDAO.save(otpCode);
             return otpCode;
         } else {
@@ -34,8 +39,8 @@ public class OTPService {
         }
     }
 
-    public Optional<OTPCode> getOTPByOperationId(String operationId) {
-        return otpCodesDAO.findByOperationId(operationId);
+    public List<OTPCode> getOTPsByOperationId(String operationId) {
+        return otpCodesDAO.findAllByOperationId(operationId);
     }
 
     public List<OTPCode> getAllOTPs() {
@@ -43,7 +48,7 @@ public class OTPService {
     }
 
     public boolean validateOTP(String operationId, String code) {
-        Optional<OTPCode> otpCodeOptional = otpCodesDAO.findByOperationId(operationId);
+        Optional<OTPCode> otpCodeOptional = otpCodesDAO.findActiveByOperationId(operationId);
         if (otpCodeOptional.isPresent()) {
             OTPCode otpCode = otpCodeOptional.get();
             if (otpCode.getCode().equals(code) && otpCode.getStatus() == OTPCode.Status.ACTIVE) {
@@ -79,4 +84,9 @@ public class OTPService {
             }
         }
     }
+
+    public void expireOTPById(int otpId) {
+        otpCodesDAO.updateStatus(otpId, OTPCode.Status.EXPIRED);
+    }
+
 }

@@ -1,12 +1,13 @@
 package sf.mephi.study.otp.api;
 
 import sf.mephi.study.otp.api.controller.AdminController;
+import sf.mephi.study.otp.api.controller.OTPController;
 import sf.mephi.study.otp.api.controller.UserController;
 import sf.mephi.study.otp.api.filter.JwtFilter;
+import sf.mephi.study.otp.dao.OTPCodesDAO;
 import sf.mephi.study.otp.dao.OTPConfigDAO;
 import sf.mephi.study.otp.dao.UserDAO;
-import sf.mephi.study.otp.service.AdminService;
-import sf.mephi.study.otp.service.UserService;
+import sf.mephi.study.otp.service.*;
 import sf.mephi.study.otp.util.JwtUtil;
 
 import com.sun.net.httpserver.HttpServer;
@@ -21,12 +22,23 @@ public class HttpServerSetup {
     public static void main(String[] args) throws IOException {
         // Создаем DAO, сервисы и контроллеры
         UserDAO userDAO = new UserDAO();
+        OTPCodesDAO otpCodesDAO = new OTPCodesDAO();
         OTPConfigDAO otpConfigDAO = new OTPConfigDAO();
         UserService userService = new UserService(userDAO);
         AdminService adminService = new AdminService(userDAO, otpConfigDAO);
         JwtUtil jwtUtil = new JwtUtil();
         UserController userController = new UserController(userService, jwtUtil);
         AdminController adminController = new AdminController(adminService, jwtUtil);
+
+        // Создаем сервисы для отправки уведомлений
+        SmsNotificationService smsNotificationService = new SmsNotificationService();
+        TelegramNotificationService telegramNotificationService = new TelegramNotificationService();
+        EmailNotificationService emailNotificationService = new EmailNotificationService();
+
+        // Создаем контроллер для отправки OTP-кодов
+        OTPService otpService = new OTPService(otpCodesDAO, otpConfigDAO);
+        OTPController otpController = new OTPController(otpService, smsNotificationService, telegramNotificationService, emailNotificationService);
+
 
         // Создаем HTTP-сервер
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
@@ -44,6 +56,8 @@ public class HttpServerSetup {
         server.createContext("/getAllUsers", adminController.getAllUsersHandler()).getFilters().add(jwtFilter);
         server.createContext("/updateOTPConfig", adminController.updateOTPConfigHandler()).getFilters().add(jwtFilter);
         server.createContext("/getOTPConfig", adminController.getOTPConfigHandler()).getFilters().add(jwtFilter);
+        server.createContext("/sendOTP", otpController.sendCodeHandler()); // Добавляем эндпоинт для отправки OTP-кодов
+        server.createContext("/validateOTP", otpController.validateCodeHandler()); // Добавляем эндпоинт для валидации OTP-кодов
 
         server.createContext("/secure", exchange -> {
             String username = (String) exchange.getAttribute("username");
