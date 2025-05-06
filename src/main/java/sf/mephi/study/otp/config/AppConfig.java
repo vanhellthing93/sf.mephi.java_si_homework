@@ -11,7 +11,7 @@ public class AppConfig {
     private static Properties emailProperties = new Properties();
     private static Properties smsProperties = new Properties();
     private static Properties telegramProperties = new Properties();
-
+    private static Properties fileProperties = new Properties();
 
     static {
         loadProperties("application.properties", appProperties);
@@ -19,6 +19,7 @@ public class AppConfig {
         loadProperties("email.properties", emailProperties);
         loadProperties("sms.properties", smsProperties);
         loadProperties("telegram.properties", telegramProperties);
+        loadProperties("file.properties", fileProperties);
 
     }
 
@@ -118,4 +119,7 @@ public class AppConfig {
         return telegramProperties.getProperty("telegram.chat.id");
     }
 
+    public static String getOtpFilePath() {
+        return fileProperties.getProperty("otp.file.path");
+    }
 }

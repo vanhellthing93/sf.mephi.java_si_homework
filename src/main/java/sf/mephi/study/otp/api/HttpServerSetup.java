@@ -34,10 +34,17 @@ public class HttpServerSetup {
         SmsNotificationService smsNotificationService = new SmsNotificationService();
         TelegramNotificationService telegramNotificationService = new TelegramNotificationService();
         EmailNotificationService emailNotificationService = new EmailNotificationService();
+        FileNotificationService fileNotificationService = new FileNotificationService();
 
         // Создаем контроллер для отправки OTP-кодов
         OTPService otpService = new OTPService(otpCodesDAO, otpConfigDAO);
-        OTPController otpController = new OTPController(otpService, smsNotificationService, telegramNotificationService, emailNotificationService);
+        OTPController otpController = new OTPController(
+                otpService,
+                smsNotificationService,
+                telegramNotificationService,
+                emailNotificationService,
+                fileNotificationService
+        );
 
 
         // Создаем HTTP-сервер

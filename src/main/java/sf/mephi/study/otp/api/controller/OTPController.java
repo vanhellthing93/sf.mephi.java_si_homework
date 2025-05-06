@@ -3,10 +3,7 @@ package sf.mephi.study.otp.api.controller;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import sf.mephi.study.otp.model.OTPCode;
-import sf.mephi.study.otp.service.EmailNotificationService;
-import sf.mephi.study.otp.service.OTPService;
-import sf.mephi.study.otp.service.SmsNotificationService;
-import sf.mephi.study.otp.service.TelegramNotificationService;
+import sf.mephi.study.otp.service.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -18,13 +15,18 @@ public class OTPController {
     private final SmsNotificationService smsNotificationService;
     private final TelegramNotificationService telegramNotificationService;
     private final EmailNotificationService emailNotificationService;
+    private final FileNotificationService fileNotificationService;
 
 
-    public OTPController(OTPService otpService, SmsNotificationService smsNotificationService, TelegramNotificationService telegramNotificationService, EmailNotificationService emailNotificationService) {
-        this.otpService = otpService;
+    public OTPController(OTPService otpService,
+                         SmsNotificationService smsNotificationService,
+                         TelegramNotificationService telegramNotificationService,
+                         EmailNotificationService emailNotificationService,
+                         FileNotificationService fileNotificationService) {        this.otpService = otpService;
         this.smsNotificationService = smsNotificationService;
         this.telegramNotificationService = telegramNotificationService;
         this.emailNotificationService = emailNotificationService;
+        this.fileNotificationService = fileNotificationService;
     }
 
     public HttpHandler sendCodeHandler() {
@@ -40,6 +42,7 @@ public class OTPController {
                         smsNotificationService.sendCode(toPhoneNumber, otpCode.getCode());
                         telegramNotificationService.sendCode(toPhoneNumber, otpCode.getCode());
                         emailNotificationService.sendCode(toEmail, otpCode.getCode());
+                        fileNotificationService.saveCode(toPhoneNumber, otpCode.getCode());
                         sendResponse(exchange, 200, "OTP code sent successfully");
                     } catch (Exception e) {
                         sendResponse(exchange, 500, "Failed to send OTP code");
