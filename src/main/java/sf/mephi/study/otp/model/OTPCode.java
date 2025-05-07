@@ -6,16 +6,18 @@ public class OTPCode {
 
     private int id;
     private String operationId;
+    private String user;
     private String code;
     private Status status;
     private LocalDateTime createdAt;
 
-    public OTPCode(int id, String operationId, String code, Status status, LocalDateTime createdAt) {
+    public OTPCode(int id, String operationId, String code, Status status, LocalDateTime createdAt, String user) {
         this.id = id;
         this.operationId = operationId;
         this.code = code;
         this.status = status;
         this.createdAt = createdAt;
+        this.user = user;
     }
 
     public int getId() {
@@ -58,10 +60,19 @@ public class OTPCode {
         this.createdAt = createdAt;
     }
 
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
     @Override
     public String toString() {
         return "OTPCode{" +
                 "id=" + id +
+                ", user=" + user +
                 ", operationId='" + operationId + '\'' +
                 ", code='" + code + '\'' +
                 ", status=" + status +

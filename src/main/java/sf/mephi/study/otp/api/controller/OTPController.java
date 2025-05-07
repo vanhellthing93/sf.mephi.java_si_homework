@@ -6,6 +6,7 @@ import sf.mephi.study.otp.model.OTPCode;
 import sf.mephi.study.otp.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sf.mephi.study.otp.util.JwtUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -19,17 +20,20 @@ public class OTPController {
     private final TelegramNotificationService telegramNotificationService;
     private final EmailNotificationService emailNotificationService;
     private final FileNotificationService fileNotificationService;
+    private final JwtUtil jwtUtil;
 
     public OTPController(OTPService otpService,
                          SmsNotificationService smsNotificationService,
                          TelegramNotificationService telegramNotificationService,
                          EmailNotificationService emailNotificationService,
-                         FileNotificationService fileNotificationService) {
+                         FileNotificationService fileNotificationService,
+                         JwtUtil jwtUtil) {
         this.otpService = otpService;
         this.smsNotificationService = smsNotificationService;
         this.telegramNotificationService = telegramNotificationService;
         this.emailNotificationService = emailNotificationService;
         this.fileNotificationService = fileNotificationService;
+        this.jwtUtil = jwtUtil;
     }
 
     public HttpHandler sendCodeHandler() {
@@ -41,13 +45,14 @@ public class OTPController {
 
                 if (operationId != null && toPhoneNumber != null) {
                     try {
-                        OTPCode otpCode = otpService.generateOTP(operationId);
+                        String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+                        String token = authHeader.substring(7);
+                        String username = jwtUtil.extractUsername(token);
+                        OTPCode otpCode = otpService.generateOTP(operationId, username);
                         smsNotificationService.sendCode(toPhoneNumber, otpCode.getCode());
                         telegramNotificationService.sendCode(toPhoneNumber, otpCode.getCode());
                         emailNotificationService.sendCode(toEmail, otpCode.getCode());
                         fileNotificationService.saveCode(toPhoneNumber, otpCode.getCode());
-
-                        logger.info("OTP code sent successfully for operationId: {}", operationId);
                         sendResponse(exchange, 200, "OTP code sent successfully");
                     } catch (Exception e) {
                         logger.error("Failed to send OTP code for operationId: {}", operationId, e);
@@ -73,7 +78,7 @@ public class OTPController {
                 if (operationId != null && code != null) {
                     boolean isValid = otpService.validateOTP(operationId, code);
                     if (isValid) {
-                        logger.info("OTP code is valid for operationId: {}", operationId);
+                        logger.info("OTP code has been verified for operationId: {}", operationId);
                         sendResponse(exchange, 200, "OTP code is valid");
                     } else {
                         logger.warn("Invalid OTP code for operationId: {}", operationId);
@@ -109,6 +114,11 @@ public class OTPController {
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(response.getBytes(StandardCharsets.UTF_8));
         }
-        logger.info("Response sent with status code: {}", statusCode);
+        logger.debug("Response sent with status code: {}", statusCode);
+    }
+
+    public void expireOTPs() {
+        otpService.expireOTPs();
+        logger.info("Existing OTP codes has been checked and renewed");
     }
 }

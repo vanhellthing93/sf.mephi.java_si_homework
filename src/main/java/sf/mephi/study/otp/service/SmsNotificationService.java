@@ -79,7 +79,7 @@ public class SmsNotificationService {
     }
 
     private void logSuccess(String destination) {
-        logger.debug("SMS sent successfully to {}", destination);
+        logger.info("SMS sent successfully to {}", destination);
     }
 
     private void handleError(String message, Exception e) {

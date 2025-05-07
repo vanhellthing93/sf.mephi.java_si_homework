@@ -26,7 +26,7 @@ public class FileNotificationService {
     private void writeToFile(String message) {
         try (FileWriter writer = new FileWriter(Paths.get(filePath).toFile(), true)) {
             writer.write(message + System.lineSeparator());
-            logger.debug("OTP code saved successfully to file: {}", filePath);
+            logger.info("OTP code saved successfully to file: {}", filePath);
         } catch (IOException e) {
             logger.error("Error saving OTP code to file: {}", filePath, e);
         }

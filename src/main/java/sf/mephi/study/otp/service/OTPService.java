@@ -23,12 +23,12 @@ public class OTPService {
         this.otpConfigDAO = otpConfigDAO;
     }
 
-    public OTPCode generateOTP(String operationId) {
+    public OTPCode generateOTP(String operationId, String username) {
         Optional<OTPConfig> configOptional = otpConfigDAO.getConfig();
         if (configOptional.isPresent()) {
             OTPConfig config = configOptional.get();
             String code = OTPGenerator.generateOTP(config.getCodeLength());
-            OTPCode otpCode = new OTPCode(0, operationId, code, OTPCode.Status.ACTIVE, LocalDateTime.now());
+            OTPCode otpCode = new OTPCode(0, operationId, code, OTPCode.Status.ACTIVE, LocalDateTime.now(), username);
 
             // Проверяем, есть ли в базе данных коды с такой же operationId и помечаем их как expired
             Optional<OTPCode> otpCodeOptional = otpCodesDAO.findActiveByOperationId(operationId);
@@ -44,18 +44,6 @@ public class OTPService {
             logger.error("OTP configuration is not set");
             throw new IllegalStateException("OTP configuration is not set");
         }
-    }
-
-    public List<OTPCode> getOTPsByOperationId(String operationId) {
-        List<OTPCode> otpCodes = otpCodesDAO.findAllByOperationId(operationId);
-        logger.debug("Retrieved {} OTP codes for operationId: {}", otpCodes.size(), operationId);
-        return otpCodes;
-    }
-
-    public List<OTPCode> getAllOTPs() {
-        List<OTPCode> otpCodes = otpCodesDAO.findAll();
-        logger.debug("Retrieved all OTP codes, count: {}", otpCodes.size());
-        return otpCodes;
     }
 
     public boolean validateOTP(String operationId, String code) {
@@ -78,12 +66,6 @@ public class OTPService {
         }
         logger.debug("OTP validation failed for operationId: {}", operationId);
         return false;
-    }
-
-    public void updateOTPConfig(int codeLength, int expirationTime) {
-        OTPConfig config = new OTPConfig(0, codeLength, expirationTime);
-        otpConfigDAO.saveOrUpdateConfig(config);
-        logger.debug("OTP config updated: codeLength={}, expirationTime={}", codeLength, expirationTime);
     }
 
     public void expireOTPs() {

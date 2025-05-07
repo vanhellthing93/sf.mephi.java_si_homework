@@ -54,20 +54,4 @@ public class UserService {
         return user;
     }
 
-    public boolean authenticateUser(String login, String password) {
-        logger.debug("Authenticating user: {}", login);
-        Optional<User> userOptional = userDAO.findByLogin(login);
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            boolean isAuthenticated = EncryptionUtil.verifyPassword(password, user.getEncryptedPassword(), user.getSalt());
-            if (isAuthenticated) {
-                logger.debug("User authenticated successfully: {}", login);
-            } else {
-                logger.warn("Authentication failed for user: {}", login);
-            }
-            return isAuthenticated;
-        }
-        logger.warn("User not found during authentication: {}", login);
-        return false;
-    }
 }

@@ -54,7 +54,7 @@ public class EmailNotificationService {
             message.setText("Your verification code is: " + code);
 
             Transport.send(message);
-            logger.debug("Email message sent successfully to {}", toEmail);
+            logger.info("Email message sent successfully to {}", toEmail);
         } catch (MessagingException e) {
             logger.error("Failed to send email to {}", toEmail, e);
             throw new RuntimeException("Failed to send email", e);

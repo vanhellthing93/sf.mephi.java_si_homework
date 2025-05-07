@@ -263,6 +263,6 @@ public class AdminController {
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(response.getBytes(StandardCharsets.UTF_8));
         }
-        logger.info("Response sent with status code: {}", statusCode);
+        logger.debug("Response sent with status code: {}", statusCode);
     }
 }

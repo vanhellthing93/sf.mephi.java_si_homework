@@ -52,7 +52,8 @@ public class HttpServerSetup {
                     smsNotificationService,
                     telegramNotificationService,
                     emailNotificationService,
-                    fileNotificationService
+                    fileNotificationService,
+                    jwtUtil
             );
 
             // Создаем HTTP-сервер
@@ -86,7 +87,7 @@ public class HttpServerSetup {
 
             // Настраиваем периодическое обновление статуса истекших OTP-кодов
             ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-            scheduler.scheduleAtFixedRate(otpService::expireOTPs, 0, AppConfig.getOtpExpirationTime(), TimeUnit.SECONDS);
+            scheduler.scheduleAtFixedRate(otpController::expireOTPs, 0, AppConfig.getOtpExpirationTime(), TimeUnit.SECONDS);
             logger.info("Scheduled task for expiring OTPs configured");
 
             // Запускаем сервер

@@ -26,7 +26,7 @@ public class JwtFilter extends Filter {
             String token = authHeader.substring(7);
             String username = jwtUtil.extractUsername(token);
             if (username != null && jwtUtil.validateToken(token, username)) {
-                logger.info("Token validated successfully for user: {}", username);
+                logger.debug("Token validated successfully for user: {}", username);
                 exchange.setAttribute("username", username);
                 chain.doFilter(exchange);
             } else {
