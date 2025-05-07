@@ -1,5 +1,7 @@
 package sf.mephi.study.otp.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.smpp.TCPIPConnection;
 import org.smpp.pdu.BindResponse;
 import org.smpp.pdu.BindTransmitter;
@@ -8,9 +10,9 @@ import sf.mephi.study.otp.config.AppConfig;
 import org.smpp.Connection;
 import org.smpp.Session;
 
-
 public class SmsNotificationService {
 
+    private static final Logger logger = LoggerFactory.getLogger(SmsNotificationService.class);
     private final String host;
     private final int port;
     private final String systemId;
@@ -25,11 +27,12 @@ public class SmsNotificationService {
         this.password = AppConfig.getSmppPassword();
         this.systemType = AppConfig.getSmppSystemType();
         this.sourceAddress = AppConfig.getSmppSourceAddr();
+        logger.debug("SmsNotificationService initialized with host: {}, port: {}", host, port);
     }
 
     public void sendCode(String destination, String code) {
-        Connection connection;
-        Session session;
+        Connection connection = null;
+        Session session = null;
 
         try {
             // 1. Установка соединения
@@ -54,18 +57,32 @@ public class SmsNotificationService {
             submitSM.setShortMessage("Your code: " + code);
 
             session.submit(submitSM);
-            logSuccess();
+            logSuccess(destination);
         } catch (Exception e) {
-            handleError(e.getMessage(), e);
+            handleError("Failed to send SMS to " + destination, e);
+        } finally {
+            try {
+                if (session != null) {
+                    session.unbind();
+                }
+            } catch (Exception e) {
+                logger.error("Failed to unbind session", e);
+            }
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (Exception e) {
+                logger.error("Failed to close connection", e);
+            }
         }
     }
 
-    private void logSuccess() {
-        System.out.println("SMS sent successfully");
+    private void logSuccess(String destination) {
+        logger.debug("SMS sent successfully to {}", destination);
     }
 
     private void handleError(String message, Exception e) {
-        System.err.println("Error: " + message);
-        e.printStackTrace();
+        logger.error(message, e);
     }
 }

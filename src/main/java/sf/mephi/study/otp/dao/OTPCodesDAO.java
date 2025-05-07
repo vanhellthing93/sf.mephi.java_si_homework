@@ -1,5 +1,7 @@
 package sf.mephi.study.otp.dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sf.mephi.study.otp.model.OTPCode;
 import sf.mephi.study.otp.util.DatabaseUtil;
 
@@ -10,6 +12,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class OTPCodesDAO {
+
+    private static final Logger logger = LoggerFactory.getLogger(OTPCodesDAO.class);
 
     public void save(OTPCode otpCode) {
         String sql = "INSERT INTO otp_codes (operation_id, code, status, created_at) VALUES (?, ?, ?, ?)";
@@ -28,7 +32,7 @@ public class OTPCodesDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("SQL Error: ", e);
         }
     }
 
@@ -48,7 +52,7 @@ public class OTPCodesDAO {
                 return Optional.of(new OTPCode(id, operationId, code, status, createdAt));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("SQL Error: ", e);
         }
         return Optional.empty();
     }
@@ -70,7 +74,7 @@ public class OTPCodesDAO {
                 otpCodes.add(new OTPCode(id, operationId, code, status, createdAt));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("SQL Error: ", e);
         }
         return otpCodes;
     }
@@ -91,7 +95,7 @@ public class OTPCodesDAO {
                 otpCodes.add(new OTPCode(id, operationId, code, status, createdAt));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("SQL Error: ", e);
         }
         return otpCodes;
     }
@@ -105,7 +109,7 @@ public class OTPCodesDAO {
             statement.setInt(2, id);
             statement.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("SQL Error: ", e);
         }
     }
 
@@ -117,7 +121,7 @@ public class OTPCodesDAO {
             statement.setInt(1, id);
             statement.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("SQL Error: ", e);
         }
     }
 }

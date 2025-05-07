@@ -6,7 +6,8 @@ import sf.mephi.study.otp.model.User;
 import sf.mephi.study.otp.service.UserService;
 import sf.mephi.study.otp.util.EncryptionUtil;
 import sf.mephi.study.otp.util.JwtUtil;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -15,6 +16,7 @@ import java.util.Optional;
 
 public class UserController {
 
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
@@ -32,13 +34,37 @@ public class UserController {
                 String role = getQueryParam(exchange, "role");
 
                 if (login != null && password != null && role != null) {
-                    User.Role userRole = User.Role.valueOf(role.toUpperCase());
-                    userService.registerUser(login, password, userRole);
-                    sendResponse(exchange, 200, "User registered successfully");
+                    try {
+                        //проверка, что пользователь с таким username ещё не создан
+                        Optional<User> userOptional = userService.getUserByLogin(login);
+                        if (userOptional.isPresent()) {
+                            logger.warn("Attempt to register user with username that is already used");
+                            sendResponse(exchange, 400, "User with this login already exist");
+                            return;
+                        }
+                        //проверка, что пользователь с ролью ADMIN ещё не создан
+                        User.Role userRole = User.Role.valueOf(role.toUpperCase());
+                        if (userRole == User.Role.ADMIN) {
+                            Optional<User> adminUserOptional = userService.getUserByRole("ADMIN");
+                            if (adminUserOptional.isPresent()) {
+                                logger.warn("Attempt to register another user with role ADMIN");
+                                sendResponse(exchange, 400, "User with role ADMIN already exist");
+                                return;
+                            }
+                        }
+                        userService.registerUser(login, password, userRole);
+                        logger.info("User registered successfully: {}", login);
+                        sendResponse(exchange, 200, "User registered successfully");
+                    } catch (IllegalArgumentException e) {
+                        logger.warn("Invalid role specified for user registration: {}", role);
+                        sendResponse(exchange, 400, "Invalid role specified");
+                    }
                 } else {
+                    logger.warn("Invalid request parameters for registerUser: login={}, password={}, role={}", login, password, role);
                     sendResponse(exchange, 400, "Invalid request parameters");
                 }
             } else {
+                logger.warn("Method Not Allowed for registerUser");
                 sendResponse(exchange, 405, "Method Not Allowed");
             }
         };
@@ -57,17 +83,22 @@ public class UserController {
                         String hashedPassword = EncryptionUtil.hashPassword(password, user.getSalt());
                         if (user.getEncryptedPassword().equals(hashedPassword)) {
                             String token = jwtUtil.generateToken(login);
+                            logger.info("User logged in successfully: {}", login);
                             sendResponse(exchange, 200, "{\"token\":\"" + token + "\"}");
                         } else {
+                            logger.warn("Invalid login or password for user: {}", login);
                             sendResponse(exchange, 401, "Invalid login or password");
                         }
                     } else {
+                        logger.warn("Invalid login or password for user: {}", login);
                         sendResponse(exchange, 401, "Invalid login or password");
                     }
                 } else {
+                    logger.warn("Invalid request parameters for login: login={}, password={}", login, password);
                     sendResponse(exchange, 400, "Invalid request parameters");
                 }
             } else {
+                logger.warn("Method Not Allowed for login");
                 sendResponse(exchange, 405, "Method Not Allowed");
             }
         };
@@ -92,5 +123,6 @@ public class UserController {
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(response.getBytes(StandardCharsets.UTF_8));
         }
+        logger.debug("Response sent with status code: {}", statusCode);
     }
 }

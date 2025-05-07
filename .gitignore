@@ -45,3 +45,4 @@ build/
 /src/main/resources/sms.properties
 /src/main/resources/telegram.properties
 /src/main/resources/file.properties
+/otp_codes.txt

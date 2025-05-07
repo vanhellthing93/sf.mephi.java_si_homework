@@ -1,125 +1,128 @@
 package sf.mephi.study.otp.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
 public class AppConfig {
 
+    private static final Logger logger = LoggerFactory.getLogger(AppConfig.class);
     private static Properties appProperties = new Properties();
-    private static Properties dbProperties = new Properties();
-    private static Properties emailProperties = new Properties();
-    private static Properties smsProperties = new Properties();
-    private static Properties telegramProperties = new Properties();
-    private static Properties fileProperties = new Properties();
 
     static {
         loadProperties("application.properties", appProperties);
-        loadProperties("database.properties", dbProperties);
-        loadProperties("email.properties", emailProperties);
-        loadProperties("sms.properties", smsProperties);
-        loadProperties("telegram.properties", telegramProperties);
-        loadProperties("file.properties", fileProperties);
-
     }
 
     private static void loadProperties(String fileName, Properties properties) {
         try (InputStream input = AppConfig.class.getClassLoader().getResourceAsStream(fileName)) {
             if (input == null) {
-                throw new RuntimeException("Unable to find " + fileName);
+                String errorMessage = "Unable to find " + fileName;
+                logger.error(errorMessage);
+                throw new RuntimeException(errorMessage);
             }
             properties.load(input);
+            logger.info("Properties loaded successfully from {}", fileName);
         } catch (IOException ex) {
-            ex.printStackTrace();
+            logger.error("Failed to load properties from {}", fileName, ex);
         }
     }
 
     public static String getJwtSecret() {
-        return appProperties.getProperty("jwt.secret");
+        return getProperty("jwt.secret");
     }
 
-    public static long getExpirationTime() {
-        String expirationTimeStr = appProperties.getProperty("jwt.expiration.time");
-        return Long.parseLong(expirationTimeStr);
+    public static long getJwtExpirationTime() {
+        return Long.parseLong(getProperty("jwt.expiration.time"));
     }
 
     public static String getDbUrl() {
-        return dbProperties.getProperty("db.url");
+        return getProperty("db.url");
     }
 
     public static String getDbUser() {
-        return dbProperties.getProperty("db.user");
+        return getProperty("db.user");
     }
 
     public static String getDbPassword() {
-        return dbProperties.getProperty("db.password");
+        return getProperty("db.password");
     }
 
     public static String getEmailUsername() {
-        return emailProperties.getProperty("email.username");
+        return getProperty("email.username");
     }
 
     public static String getEmailPassword() {
-        return emailProperties.getProperty("email.password");
+        return getProperty("email.password");
     }
 
     public static String getEmailFrom() {
-        return emailProperties.getProperty("email.from");
+        return getProperty("email.from");
     }
 
     public static String getSmtpHost() {
-        return emailProperties.getProperty("mail.smtp.host");
+        return getProperty("mail.smtp.host");
     }
 
     public static int getSmtpPort() {
-        String portStr = emailProperties.getProperty("mail.smtp.port");
-        return Integer.parseInt(portStr);
+        return Integer.parseInt(getProperty("mail.smtp.port"));
     }
 
     public static boolean isSmtpAuth() {
-        String authStr = emailProperties.getProperty("mail.smtp.auth");
-        return Boolean.parseBoolean(authStr);
+        return Boolean.parseBoolean(getProperty("mail.smtp.auth"));
     }
 
     public static boolean isSmtpSslEnable() {
-        String sslEnableStr = emailProperties.getProperty("mail.smtp.ssl.enable");
-        return Boolean.parseBoolean(sslEnableStr);
+        return Boolean.parseBoolean(getProperty("mail.smtp.ssl.enable"));
     }
 
     public static String getSmppHost() {
-        return smsProperties.getProperty("smpp.host");
+        return getProperty("smpp.host");
     }
 
     public static int getSmppPort() {
-        String portStr = smsProperties.getProperty("smpp.port");
-        return Integer.parseInt(portStr);
+        return Integer.parseInt(getProperty("smpp.port"));
     }
 
     public static String getSmppSystemId() {
-        return smsProperties.getProperty("smpp.system_id");
+        return getProperty("smpp.system_id");
     }
 
     public static String getSmppPassword() {
-        return smsProperties.getProperty("smpp.password");
+        return getProperty("smpp.password");
     }
 
     public static String getSmppSystemType() {
-        return smsProperties.getProperty("smpp.system_type");
+        return getProperty("smpp.system_type");
     }
 
     public static String getSmppSourceAddr() {
-        return smsProperties.getProperty("smpp.source_addr");
+        return getProperty("smpp.source_addr");
     }
 
     public static String getTelegramBotToken() {
-        return telegramProperties.getProperty("telegram.bot.token");
+        return getProperty("telegram.bot.token");
     }
 
     public static String getTelegramChatId() {
-        return telegramProperties.getProperty("telegram.chat.id");
+        return getProperty("telegram.chat.id");
     }
 
     public static String getOtpFilePath() {
-        return fileProperties.getProperty("otp.file.path");
+        return "otp_codes.txt";
+    }
+
+    public static long getOtpExpirationTime() {
+        return Long.parseLong(getProperty("otp.expiration.time"));
+    }
+
+    private static String getProperty(String key) {
+        String value = appProperties.getProperty(key);
+        if (value == null) {
+            logger.warn("Property {} is not set in the configuration", key);
+        }
+        return value;
     }
 }

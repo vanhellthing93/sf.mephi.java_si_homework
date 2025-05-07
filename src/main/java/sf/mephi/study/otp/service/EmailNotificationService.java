@@ -1,15 +1,17 @@
 package sf.mephi.study.otp.service;
 
 import sf.mephi.study.otp.config.AppConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.Properties;
 
-
 public class EmailNotificationService {
 
+    private static final Logger logger = LoggerFactory.getLogger(EmailNotificationService.class);
     private final String username;
     private final String password;
     private final String fromEmail;
@@ -26,6 +28,7 @@ public class EmailNotificationService {
                 return new PasswordAuthentication(username, password);
             }
         });
+        logger.debug("Email session initialized successfully");
     }
 
     private Properties loadConfig() {
@@ -38,6 +41,7 @@ public class EmailNotificationService {
         config.put("email.username", AppConfig.getEmailUsername());
         config.put("email.password", AppConfig.getEmailPassword());
         config.put("email.from", AppConfig.getEmailFrom());
+        logger.debug("Email configuration loaded successfully");
         return config;
     }
 
@@ -50,8 +54,9 @@ public class EmailNotificationService {
             message.setText("Your verification code is: " + code);
 
             Transport.send(message);
-            System.out.println("Email message sent successfully");
+            logger.debug("Email message sent successfully to {}", toEmail);
         } catch (MessagingException e) {
+            logger.error("Failed to send email to {}", toEmail, e);
             throw new RuntimeException("Failed to send email", e);
         }
     }

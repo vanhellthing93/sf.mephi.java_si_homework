@@ -1,5 +1,7 @@
 package sf.mephi.study.otp.dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sf.mephi.study.otp.model.OTPConfig;
 import sf.mephi.study.otp.util.DatabaseUtil;
 
@@ -10,6 +12,8 @@ import java.sql.SQLException;
 import java.util.Optional;
 
 public class OTPConfigDAO {
+
+    private static final Logger logger = LoggerFactory.getLogger(OTPConfigDAO.class);
 
     public Optional<OTPConfig> getConfig() {
         String sql = "SELECT id, code_length, expiration_time FROM otp_config LIMIT 1";
@@ -24,7 +28,7 @@ public class OTPConfigDAO {
                 return Optional.of(new OTPConfig(id, codeLength, expirationTime));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("SQL Error: ", e);
         }
         return Optional.empty();
     }
@@ -33,8 +37,10 @@ public class OTPConfigDAO {
         Optional<OTPConfig> existingConfig = getConfig();
         if (existingConfig.isPresent()) {
             updateConfig(config);
+            logger.debug("OTP config has been updated");
         } else {
             insertConfig(config);
+            logger.debug("OTP config has been created");
         }
     }
 
@@ -47,7 +53,7 @@ public class OTPConfigDAO {
             statement.setInt(2, config.getExpirationTime());
             statement.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("SQL Error: ", e);
         }
     }
 
@@ -60,7 +66,7 @@ public class OTPConfigDAO {
             statement.setInt(2, config.getExpirationTime());
             statement.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("SQL Error: ", e);
         }
     }
 }
