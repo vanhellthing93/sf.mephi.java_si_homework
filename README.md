@@ -52,23 +52,48 @@ CREATE DATABASE otp_service;
 Клонируйте репозиторий:
 
 ```bash
-git clone https://github.com/amasovich/otp-protection-service.git
-cd otp-protection-service
+git clone https://github.com/vanhellthing93/sf.mephi.java_si_homework
 ```
 
-Заполните конфигурационные файлы в `src/main/resources`:
-
-- `application.properties` (параметры БД)
-- `email.properties` (SMTP сервер)
-- `sms.properties` (SMPP эмулятор)
-- `telegram.properties` (токен и chatId)
+Заполните конфигурационные файлы в `src/main/resources/application.properties`:
 
 Пример `application.properties`:
 
 ```properties
-db.url=jdbc:postgresql://localhost:5432/otp_service
+#Период действия JWT токена
+jwt.expiration.time=3600000
+
+# JWT код
+jwt.secret=YOUR_JWT_SECRET_PASS
+
+# Данные для подключения к БД
+db.url=jdbc:postgresql://address:port/db
 db.user=postgres
-db.password=ваш_пароль
+db.password=postgres
+
+# Данные для подключения е-mail 
+email.username=username@example.com
+email.password=password
+email.from=username@example.com
+mail.smtp.host=smtp.example.com
+mail.smtp.port=465
+mail.smtp.auth=true
+mail.smtp.ssl.enable=true
+
+# Данные для подключения сервера-заглушки SMPP
+smpp.host=localhost
+smpp.port=2775
+smpp.system_id=smppclient1
+smpp.password=password
+smpp.system_type=OTP
+smpp.source_addr=OTPService
+
+#Данные для подключения Telegram
+telegram.bot.token=YOUR_TELEGRAM_BOT_TOKEN
+telegram.chat.id=YOUR_TELEGRAM_CHAT_ID
+
+#Время проверки ОТП (в секундах). При текущей настройке раз в 60 секунд будет проверяться истекли ли активнвые отп коды
+otp.expiration.time=60
 ```
 
 ### 3. Сборка и запуск
@@ -77,7 +102,7 @@ db.password=ваш_пароль
 
 ```bash
 mvn clean package
-java -jar target/otp-backend.jar
+java -jar ./target/otp-1.0-SNAPSHOT.jar
 ```
 
 ---
@@ -89,19 +114,15 @@ otp-protection-service/
 ├── src/                      # Исходный код и ресурсы
 │   └── main/
 │       ├── java/             # Java-код
-│       │   └── otp/
-│       │       ├── api/      # HTTP-контроллеры (API-слой)
+│       │   └── sf.mephi.study.otp/
+│       │       ├── api/      # HTTP-контроллеры и фильтры (API-слой)
 │       │       ├── config/   # Конфигурация приложения (загрузка конфигураций)
 │       │       ├── dao/      # Доступ к базе данных (JDBC-реализация)
 │       │       ├── model/    # Модели данных (DTO и сущности)
 │       │       ├── service/  # Бизнес-логика и сервисы
 │       │       └── util/     # Вспомогательные классы и утилиты
 │       └── resources/        # Конфигурационные файлы и ресурсы
-│           ├── application.properties  # Общие настройки приложения
-│           ├── email.properties        # Настройки Email
-│           ├── logback.xml             # Конфигурация логирования
-│           ├── sms.properties          # Настройки SMS
-│           └── telegram.properties     # Настройки Telegram
+│           └── application.properties     # Общие настройки приложения
 ├── pom.xml                   # Конфигурация Maven
 └── README.md                 # Описание проекта
 ```
@@ -111,8 +132,8 @@ otp-protection-service/
 ## 🔑 Роли и авторизация
 
 - **ADMIN**: полные права управления
-    - настройка OTP
-    - просмотр и удаление пользователей
+    - настройка конфигурации OTP
+    - просмотр и удаление пользователей (при удалении пользователей удаляются их OTP коды)
 - **USER**: ограниченные права
     - генерация и валидация OTP
 
@@ -132,53 +153,51 @@ Authorization: Bearer <token>
 ### Регистрация пользователя
 
 ```bash
-curl -X POST http://localhost:8080/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"user1","password":"password123","role":"USER"}'
+curl -X POST "http://localhost:8080/register?login=user1&password=password123&role=USER"
 ```
 
-### Вход (получение токена)
+### Авторизация (получение токена)
 
 ```bash
-curl -X POST http://localhost:8080/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"user1","password":"password123"}'
+curl -X POST "http://localhost:8080/login?login=user1&password=password123"
 ```
 
-### Генерация OTP
+### Генерация OTP  (требует авторизации)
 
 ```bash
-curl -X POST http://localhost:8080/otp/generate \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{"operationId":"op123","channel":"EMAIL"}'
+curl -X POST "http://localhost:8080/sendOTP?operationId=test123&phone=+79991234567" \
+     -H "Authorization: Bearer ваш_jwt_токен"
 ```
 
-### Проверка OTP
+### Проверка OTP  (требует авторизации)
 
 ```bash
-curl -X POST http://localhost:8080/otp/validate \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{"code":"123456"}'
+curl -X POST "http://localhost:8080/validateOTP?operationId=test123&code=123456" \
+     -H "Authorization: Bearer ваш_jwt_токен"
 ```
 
-### Действия администратора
+### Действия администратора (требуют авторизации)
 
 ```bash
-# Изменение параметров OTP
-curl -X PATCH http://localhost:8080/admin/config \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ADMIN_TOKEN" \
-  -d '{"length":6,"ttlSeconds":300}'
+# Получение информации о пользователе
+curl -X GET "http://localhost:8080/getUser?login=user1" \
+     -H "Authorization: Bearer ваш_jwt_токен"
 
-# Просмотр пользователей
-curl -X GET http://localhost:8080/admin/users \
-  -H "Authorization: Bearer ADMIN_TOKEN"
+# Удаление пользователя (удаляет всего его otp коды)
+curl -X DELETE "http://localhost:8080/deleteUser?login=user1" \
+     -H "Authorization: Bearer ваш_jwt_токен"
 
-# Удаление пользователя
-curl -X DELETE http://localhost:8080/admin/users/2 \
-  -H "Authorization: Bearer ADMIN_TOKEN"
+#  Получение списка всех пользователей
+curl -X GET "http://localhost:8080/getAllUsers" \
+     -H "Authorization: Bearer ваш_jwt_токен"
+     
+#  Получение текущей конфигурации OTP
+curl -X GET "http://localhost:8080/getOTPConfig" \
+     -H "Authorization: Bearer ваш_jwt_токен"
+
+#  Обновление конфигурации OTP
+curl -X PUT "http://localhost:8080/updateOTPConfig?codeLength=6&expirationTime=300" \
+     -H "Authorization: Bearer ваш_jwt_токен"
 ```
 
 ---
@@ -196,7 +215,6 @@ curl -X DELETE http://localhost:8080/admin/users/2 \
 
 ## 🖋 Автор
 
-**Березняк Владимир**\
+**Косовский Иван**\
 Проект реализован в рамках учебного задания МИФИ\
-GitHub: [github.com/amasovich](https://github.com/amasovich)\
-Telegram: [@amasovich](https://t.me/amasovich)
+GitHub: [github.com/vanhellthing93](https://github.com/vanhellthing93)

@@ -39,10 +39,5 @@ build/
 /.idea/
 /structure.md
 /Напоминания.md
-/src/main/resources/database.properties
-/src/main/resources/application.properties
-/src/main/resources/email.properties
-/src/main/resources/sms.properties
-/src/main/resources/telegram.properties
-/src/main/resources/file.properties
+/src/main/resources/application3.properties
 /otp_codes.txt
